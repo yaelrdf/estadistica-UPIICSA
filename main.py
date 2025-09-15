@@ -1,8 +1,12 @@
-import pandas
+import pandas as pd
 import math
 import statistics
-import operaciones
 import matplotlib.pyplot as plt
+import nicegui
+from nicegui import ui
+
+#Other locals
+import operaciones
 
 #Data for testing
 data= [49,38,31,27,20,41,33,28,22,48,16,37,31,26,19,41,33,27,21,46,37,45,31,26,18,39,32,27,21,47,37,30,34,25,16,39,31,27,20,45,36,30,24,29,15,44,35,30,24,43,35,29,23,43,23]
@@ -28,7 +32,7 @@ tabla= {
     'Frecuencia acumulada': []
 }
 
-df=pandas.DataFrame(tabla)
+df=pd.DataFrame(tabla)
 
 #Filler
 def filler(dataset,data,amp):
@@ -62,10 +66,10 @@ def grapher(df):
     plt.title("Histograma")
     plt.xlabel("Punto medio de intervalo")
     plt.ylabel("Frecuencia")
-    plt.bar(graph_medio,graph_frecuencia)
+    plt.bar(graph_medio,graph_frecuencia,width=1)
     #Back grid
     plt.grid(axis='y')
-    plt.show()
+    #plt.show()
     
     
 #Tester
@@ -84,4 +88,20 @@ print('\nTabla')
 #df=pandas.DataFrame(tabla)
 print(df)
 
-grapher(df)
+#####Web user interface
+with ui.grid(columns=2):
+    ui.table.from_pandas(df).classes('max-h-200')
+
+    with ui.pyplot(figsize=(8, 4)) as plot:
+        grapher(df)
+
+
+ui.separator()
+#Datos labes
+with ui.column().classes('gap-0'):
+    ui.markdown('**Datos**')
+    ui.restructured_text('**N:** '+str(n))
+    ui.restructured_text('**Valor maximo:** '+str(max))
+    ui.restructured_text('**Valor minimo:** '+str(min))
+
+ui.run()
