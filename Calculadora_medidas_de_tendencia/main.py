@@ -7,6 +7,7 @@ from nicegui import ui
 
 #Other locals
 import operaciones
+import renderer
 
 #Data for testing
 data= [49,38,31,27,20,41,33,28,22,48,16,37,31,26,19,41,33,27,21,46,37,45,31,26,18,39,32,27,21,47,37,30,34,25,16,39,31,27,20,45,36,30,24,29,15,44,35,30,24,43,35,29,23,43,23]
@@ -19,7 +20,6 @@ sturges=operaciones.sturges(data)
 amplitud=operaciones.amplitud(rango,sturges)
 mediana=statistics.median(data)
 moda=statistics.mode(data)
-#Reciclados
 max=max(data)
 min=min(data)
 
@@ -34,32 +34,7 @@ tabla= {
 
 df=pd.DataFrame(tabla)
 
-#Filler
-def filler(dataset,data,amp):
-    # 1er Fill
-    Intervalo_superior=min+amp
-    Intervalo_inferior=min
-    Frecuencia=operaciones.frecuencia(data,Intervalo_inferior,Intervalo_superior)
-    Punto_medio=statistics.mean([Intervalo_inferior,Intervalo_superior])
-    Acumulada=Frecuencia
-    
-    df.loc[len(df)]= [1,Intervalo_inferior,Intervalo_superior,Frecuencia,Punto_medio,Acumulada]
-    
-    k=1
-    #Fill consequent
-    while (df.iloc[len(df)-1,2]) <= max :
-        k=k+1
-        inferior=(df.iloc[len(df)-1,2])
-        superior=(df.iloc[len(df)-1,2])+amp
-        #Frecuencias
-        Frecuencia=operaciones.frecuencia(data,inferior,superior)
-        p_medio=statistics.mean([inferior,superior])
-        #Acumulada
-        Acumulada=(df.iloc[len(df)-1,5])+Frecuencia
-        
-        df.loc[len(df)]= [k,inferior,superior,Frecuencia,p_medio,Acumulada]
-    
-def grapher(df):
+def grapher_acum(df):
     graph_frecuencia= df['Frecuencia absoluta'].tolist()
     graph_medio=df['Punto medio del intervalo'].tolist()
     
@@ -73,7 +48,8 @@ def grapher(df):
     
     
 #Tester
-filler(df,data,amplitud)
+operaciones.filler(df,data,amplitud,min,max)
+
 print('N: ',n)
 print('Maximo: ',max)
 print('Minimo: ',min)
@@ -88,20 +64,75 @@ print('\nTabla')
 #df=pandas.DataFrame(tabla)
 print(df)
 
+
 #####Web user interface
-with ui.grid(columns=2):
-    ui.table.from_pandas(df).classes('max-h-200')
+#Show calculos
+def calculo_interval():
+    ui.label('Datos Utilizados').props('header').classes('header')
+    ui.label(str(data)).classes('center')
+    ui.separator()
+    with ui.grid(columns=2):
+        ui.table.from_pandas(df).classes('center')
+        #Datos label
+        with ui.list().props('separator').style('margin: 0px'):
+            ui.item_label('Calculos').props('header').classes('text-bold')
+            ui.separator()
+            ui.item('N: '+str(n))
+            ui.item('Valor maximo: '+str(max))
+            ui.item('Valor minimo: '+str(min))
+            ui.item('Media: '+str(round(avg,2)))
+            ui.item('Mediana: '+str(mediana))
+            ui.item('Moda: '+str(moda))
 
-    with ui.pyplot(figsize=(8, 4)) as plot:
-        grapher(df)
+        with ui.pyplot(figsize=(8, 4)) as plot:
+            grapher_acum(df)
+
+def data_capture():
+    #Mensaje inicial
+    ui.label('Captura de datos').props('header').classes('header')
+    ui.restructured_text('Introduzca los valores separandolos por espacios **NO UTILICE SALTOS DE LINEA O COMAS**').classes('center')
+    #Espacio de captura
+    data_ui=ui.textarea(label='Introduzca los datos').classes('capture').props('clearable')
+    #Switch por intervalos
+    intervalos = ui.switch('Calcular por intervalos').props('inline color=green').style('margin: 10px; margin-left: 40px')
+    #Boton calculo
+    ui.button('Calcular', on_click=lambda: ui.notify('You clicked me!')).classes('button').props('inline color=green')
+    
+##Main GUI  
+ui.page_title('Calculadora Medidas de tendendia central')
+ui.add_css('''
+    .header {
+        font-size: 1.75em;
+        font-weight: bold;
+        margin: auto;
+    }
+    .center {
+        margin: auto;
+        text-align: center;
+        align-items: center;
+    }
+    .capture {
+        padding: 5px 50px;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin: 0;
+    }
+    .button {
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        margin: auto;
+        text-align: center;
+        align-items: center;
+    }
+''')
 
 
-ui.separator()
-#Datos labes
-with ui.column().classes('gap-0'):
-    ui.markdown('**Datos**')
-    ui.restructured_text('**N:** '+str(n))
-    ui.restructured_text('**Valor maximo:** '+str(max))
-    ui.restructured_text('**Valor minimo:** '+str(min))
-
+#Header
+renderer.index()
+#ui.sub_pages({'/':data, '/calculo_intervalos': calculo_interval})
+data_capture()
 ui.run()
