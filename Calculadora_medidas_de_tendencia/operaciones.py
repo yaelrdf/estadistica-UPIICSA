@@ -27,7 +27,7 @@ def filler(df,data,amp,min,max):
     Intervalo_superior=min+amp
     Intervalo_inferior=min
     Frecuencia=frecuencia(data,Intervalo_inferior,Intervalo_superior)
-    Punto_medio=statistics.mean([Intervalo_inferior,Intervalo_superior])
+    Punto_medio=round(statistics.mean([Intervalo_inferior,Intervalo_superior]),4)
     Acumulada=Frecuencia
     
     df.loc[len(df)]= [1,Intervalo_inferior,Intervalo_superior,Frecuencia,Punto_medio,Acumulada]
@@ -39,7 +39,7 @@ def filler(df,data,amp,min,max):
         superior=(df.iloc[len(df)-1,2])+amp
         #Frecuencias
         Frecuencia=frecuencia(data,inferior,superior)
-        p_medio=statistics.mean([inferior,superior])
+        p_medio=round(statistics.mean([inferior,superior]),4)
         #Acumulada
         Acumulada=(df.iloc[len(df)-1,5])+Frecuencia
         
