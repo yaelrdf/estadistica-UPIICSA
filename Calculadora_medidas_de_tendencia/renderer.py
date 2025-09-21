@@ -1,6 +1,6 @@
 from nicegui import ui
 
-def index():
+def header():
     # CSS styles for the header
     ui.add_head_html('''
     <style>
@@ -68,6 +68,6 @@ def index():
         
         #Boton
         with ui.row().classes('header-button-container'):
-            ui.button('Menú', icon='menu', on_click=lambda: ui.notify('Un refresh esta por llegar')).classes('button')
+            ui.button('Nuevo calculo', on_click=lambda: ui.navigate.to('/')).classes('button').props('inline color=green')
     ui.space()
     

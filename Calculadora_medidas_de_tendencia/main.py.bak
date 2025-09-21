@@ -1,0 +1,227 @@
+import pandas as pd
+import math
+import statistics
+import matplotlib.pyplot as plt
+import nicegui
+from nicegui import ui
+
+#Other locals
+import operaciones
+import renderer
+
+#Data for testing
+#data= [49,38,31,27,20,41,33,28,22,48,16,37,31,26,19,41,33,27,21,46,37,45,31,26,18,39,32,27,21,47,37,30,34,25,16,39,31,27,20,45,36,30,24,29,15,44,35,30,24,43,35,29,23,43,23]
+#Testvariables
+intervalos=False
+data_gui=''
+
+#Variables
+n=0
+avg=0
+mediana=0
+moda=0
+max=0
+min=0
+rango=0
+sturges=0
+amplitud=0
+intervalos=False
+
+##Web user interface
+##Main GUI  
+def data_capture():
+    #Mensaje inicial
+    ui.label('Captura de datos').props('header').classes('header')
+    ui.restructured_text('Introduzca los valores separandolos por espacios **NO UTILICE SALTOS DE LINEA O COMAS**').classes('center')
+    #Espacio de captura
+    data_gui=ui.textarea(label='Introduzca los datos').classes('capture').props('clearable')
+    #Switch por intervalos
+    intervalos = ui.switch('Calcular por intervalos').props('inline color=green').style('margin: 10px; margin-left: 40px')
+    #Boton calculo
+    ui.button('Calcular', on_click=lambda: ui.navigate.to('/resultados')).classes('button').props('inline color=green')
+    return data_gui
+
+
+#Graficadoras
+def grapher_acum(df):
+        graph_frecuencia= df['Frecuencia absoluta'].tolist()
+        graph_medio=df['Punto medio del intervalo'].tolist()
+        
+        plt.title("Histograma")
+        plt.xlabel("Punto medio de intervalo")
+        plt.ylabel("Frecuencia")
+        plt.bar(graph_medio,graph_frecuencia,width=1)
+        #Back grid
+        plt.grid(axis='y')
+        #plt.show()
+        
+def grapher_static(df):
+    graph_frecuencia= df['Frecuencia absoluta'].tolist()
+    graph_medio=df['K'].tolist()
+        
+    plt.title("Histograma")
+    plt.xlabel("Clase")
+    plt.ylabel("Frecuencia")
+    plt.bar(graph_medio,graph_frecuencia,width=1)
+    #Back grid
+    plt.grid(axis='y')
+    #plt.show()
+
+#Funcion Calculo principal
+def calculus(data):
+    n=len(data)
+    avg=statistics.mean(data)
+    mediana=statistics.median(data)
+    moda=statistics.mode(data)
+    max=max(data)
+    min=min(data)
+    
+    #Condicional intervalos
+    if intervalos:
+        #Datos extras
+        rango=operaciones.rango(data)
+        sturges=operaciones.sturges(data)
+        amplitud=operaciones.amplitud(rango,sturges)
+        
+        tabla= {
+            'K':[],
+            'Intervalo inferior':[],
+            'Intervalo superior': [],
+            'Frecuencia absoluta': [],
+            'Punto medio del intervalo':[],
+            'Frecuencia acumulada': []
+        }
+        
+        #DataFrame
+        df=pd.DataFrame(tabla)
+        operaciones.filler(df,data,amplitud,min,max)
+    else:
+        tabla={
+            'K':[],
+            'Frecuencia absoluta': [],
+            'Frecuencia acumulada': []
+        }
+        #DataFrame
+        df=pd.DataFrame(tabla)
+        operaciones.filler_static(df,data)
+        
+    print('\nTabla')
+    #df=pandas.DataFrame(tabla)
+    print(df)
+
+
+#TESTER
+# print('N: ',n)
+# print('Maximo: ',max)
+# print('Minimo: ',min)
+# print('Media: ',avg)
+# print('Mediana: ', mediana)
+# print('Moda: ', moda)
+# print('rango: ',rango)
+# print('Regla de sturges: ', sturges)
+# print('Amplitud: ',amplitud)
+
+#Header
+#WEBUI
+@ui.page('/')
+def main_page():
+    ui.page_title('Calculadora Medidas de tendendia central')
+    ui.add_css('''
+            .header {
+                font-size: 1.75em;
+                font-weight: bold;
+                margin: auto;
+            }
+            .center {
+                margin: auto;
+                text-align: center;
+                align-items: center;
+            }
+            .capture {
+                padding: 5px 50px;
+                display: flex;
+                align-items: center;
+                width: 100%;
+                margin: 0;
+            }
+            .button {
+                padding: 10px 20px;
+                border-radius: 25px;
+                font-weight: bold;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+                margin: auto;
+                text-align: center;
+                align-items: center;
+            }
+        ''')
+    renderer.header()
+    data_gui=data_capture()
+
+
+##Show calculos
+@ui.page('/resultados')
+def show_data():
+    data=data_gui.split()
+    calculus(data)
+    ui.page_title('Calculadora Medidas de tendendia central')
+    ui.add_css('''
+            .header {
+                font-size: 1.75em;
+                font-weight: bold;
+                margin: auto;
+            }
+            .center {
+                margin: auto;
+                text-align: center;
+                align-items: center;
+            }
+            .capture {
+                padding: 5px 50px;
+                display: flex;
+                align-items: center;
+                width: 100%;
+                margin: 0;
+            }
+            .button {
+                padding: 10px 20px;
+                border-radius: 25px;
+                font-weight: bold;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+                margin: auto;
+                text-align: center;
+                align-items: center;
+            }
+        ''')
+    renderer.header()
+    #Data things
+    ui.label('Datos Utilizados').props('header').classes('header')
+    ui.label(str(data)).classes('center')
+    ui.separator()
+    with ui.grid(columns=2):
+        ui.table.from_pandas(df).classes('center')
+        #Datos label
+        with ui.list().props('separator').style('margin: 0px'):
+            ui.item_label('Calculos').props('header').classes('text-bold')
+            ui.separator()
+            ui.item('Nnumero de elementos: '+str(n))
+            ui.item('Valor maximo: '+str(max))
+            ui.item('Valor minimo: '+str(min))
+            ui.item('Media: '+str(round(avg,2)))
+            ui.item('Mediana: '+str(mediana))
+            ui.item('Moda: '+str(moda))
+            #Calculo por intervalos
+            if intervalos:
+                ui.item('Rango: '+str(rango))
+                ui.item('Regla de sturges: '+str(sturges))
+                ui.item('Amplitud: '+str(amplitud))
+
+        with ui.pyplot(figsize=(8, 4)) as plot:
+            if intervalos:
+                grapher_acum(df)
+            else:
+                grapher_static(df)
+
+    
+ui.run()
